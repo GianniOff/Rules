@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portail des Règlements</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* En-tête et boutons */
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .btn-retour { display: inline-block; margin-bottom: 20px; padding: 8px 15px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9em; }
+        .btn-retour:hover { background: #2980b9; }
+
+        /* Page d'accueil (Cartes) */
+        .grid-accueil { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .carte-reglement { border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; display: block; }
+        .carte-reglement:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #3498db; }
+        .carte-reglement h3 { margin-top: 0; color: #3498db; }
+        .carte-reglement p { font-size: 0.9em; color: #666; }
+
+        /* Page des articles */
+        .article { margin-bottom: 30px; padding: 15px; border-left: 4px solid #bdc3c7; background: #fdfdfd; transition: background 0.5s; }
+        .article h2 { margin-top: 0; color: #2c3e50; font-size: 1.3em; }
+        
+        /* Mise en évidence (Highlight) quand on cible un ID précis */
+        .highlight { border-left-color: #e74c3c; background: #fdf0ed; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="vue-accueil">
+        <h1>Choisissez un règlement</h1>
+        <div class="grid-accueil" id="liste-reglements">
+            </div>
+    </div>
+
+    <div id="vue-reglement" class="hidden">
+        <a href="#" class="btn-retour" onclick="window.location.hash=''; return false;">&larr; Retour à l'accueil</a>
+        <h1 id="titre-reglement">Titre</h1>
+        <p style="text-align: center; font-style: italic; color: #7f8c8d; margin-top: -20px;">Dernière mise à jour : <span id="date-reglement"></span></p>
+        
+        <div id="conteneur-articles">
+            </div>
+    </div>
+</div>
+
+<script src="comportement.js"></script>
+<script src="serveur.js"></script>
+
+<script>
+    // 2. Logique de navigation
+    function gererAffichage() {
+        const hash = window.location.hash.substring(1); // Enlève le '#'
+        const vueAccueil = document.getElementById('vue-accueil');
+        const vueReglement = document.getElementById('vue-reglement');
+
+        if (!hash) {
+            // Afficher l'accueil
+            vueReglement.classList.add('hidden');
+            vueAccueil.classList.remove('hidden');
+            genererAccueil();
+        } else {
+            // Analyser le hash (ex: comportement:id=3)
+            const parties = hash.split(':');
+            const categorieId = parties[0]; // "comportement"
+            let articleCibleId = null;
+
+            if (parties.length > 1 && parties[1].startsWith('id=')) {
+                articleCibleId = parties[1].split('=')[1]; // "3"
+            }
+
+            // Vérifier si la catégorie existe
+            if (window.ReglementsData[categorieId]) {
+                vueAccueil.classList.add('hidden');
+                vueReglement.classList.remove('hidden');
+                afficherReglement(categorieId, articleCibleId);
+            } else {
+                window.location.hash = ''; // Si erreur, on retourne à l'accueil
+            }
+        }
+    }
+
+    // 3. Générer la page d'accueil
+    function genererAccueil() {
+        const conteneur = document.getElementById('liste-reglements');
+        conteneur.innerHTML = '';
+
+        for (const [cle, data] of Object.entries(window.ReglementsData)) {
+            const lien = document.createElement('a');
+            lien.href = `#${cle}`;
+            lien.className = 'carte-reglement';
+            lien.innerHTML = `
+                <h3>${data.nom}</h3>
+                <p>${data.description}</p>
+            `;
+            conteneur.appendChild(lien);
+        }
+    }
+
+    // 4. Afficher les articles d'une catégorie
+    function afficherReglement(categorieId, articleCibleId) {
+        const data = window.ReglementsData[categorieId];
+        
+        document.getElementById('titre-reglement').textContent = data.nom;
+        document.getElementById('date-reglement').textContent = data.derniereMiseAJour;
+        
+        const conteneur = document.getElementById('conteneur-articles');
+        conteneur.innerHTML = '';
+
+        data.articles.forEach(art => {
+            const div = document.createElement('div');
+            div.className = 'article';
+            div.id = `article-${art.id}`; // Création d'un ID HTML pour le scroll
+            div.innerHTML = `
+                <h2>Article ${art.id} : ${art.titre}</h2>
+                <p>${art.contenu}</p>
+            `;
+            conteneur.appendChild(div);
+        });
+
+        // 5. Scroll et mise en évidence de l'article ciblé
+        if (articleCibleId) {
+            setTimeout(() => {
+                const elementCible = document.getElementById(`article-${articleCibleId}`);
+                if (elementCible) {
+                    elementCible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    elementCible.classList.add('highlight'); // Ajoute la couleur rouge claire
+                }
+            }, 100); // Petit délai pour laisser le HTML se construire
+        }
+    }
+
+    // Écoute les changements dans l'URL (quand on clique sur un lien ou qu'on tape dans la barre)
+    window.addEventListener('hashchange', gererAffichage);
+
+    // Exécuter au chargement initial de la page
+    gererAffichage();
+</script>
+
+</body>
+</html>
