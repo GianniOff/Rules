@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Règlement Officiel</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .update-date { font-style: italic; color: #7f8c8d; font-size: 0.9em; }
+        .article { margin-bottom: 30px; }
+        .article h2 { color: #3498db; font-size: 1.4em; margin-bottom: 10px; }
+        .article p { margin: 0; text-align: justify; }
+        footer { margin-top: 50px; text-align: center; font-size: 0.8em; color: #95a5a6; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="main-title">Chargement...</h1>
+        <p class="update-date">Dernière mise à jour : <span id="date-update"></span></p>
+    </header>
+
+    <main id="articles-container">
+        </main>
+
+    <footer>
+        &copy; 2026 - Tous droits réservés
+    </footer>
+</div>
+
+<script src="data.js"></script>
+
+<script>
+    // Script pour injecter les données dans le HTML
+    document.getElementById('main-title').textContent = reglementData.titre;
+    document.getElementById('date-update').textContent = reglementData.derniereMiseAJour;
+
+    const container = document.getElementById('articles-container');
+
+    reglementData.articles.forEach(art => {
+        const div = document.createElement('div');
+        div.className = 'article';
+        div.innerHTML = `
+            <h2>Article ${art.id} : ${art.titre}</h2>
+            <p>${art.contenu}</p>
+        `;
+        container.appendChild(div);
+    });
+</script>
+
+</body>
+</html>
